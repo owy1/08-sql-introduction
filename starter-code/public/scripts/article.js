@@ -1,5 +1,5 @@
 'use strict';
-
+var err;
 function Article (opts) {
   // REVIEW: Convert property assignment to a new pattern. Now, ALL properties of `opts` will be
   // assigned as properies of the newly created article object. We'll talk more about forEach() soon!
@@ -37,20 +37,32 @@ Article.loadAll = function(rows) {
 // If the DB has data already, we'll load up the data (sorted!), and then hand off control to the View.
 Article.fetchAll = function(callback) {
   $.get('/articles/all')
-  .then(
-    function(results) {
-      if (results.rows.length) { // If records exist in the DB
-        // TODO: Call loadAll, and pass in the results, then invoke the callback.
-      } else { // if NO records exist in the DB
-        // TODO: Make an ajax call to get the json
+  .then (function(result) {
+    if (result.rows.length) { // If records exist in the DB
+      // TODO: Call loadAll, and pass in the results, then invoke the callback.
+      Article.loadAll(result.rows);
+      if (callback) callback();
+    } else { // if NO records exist in the DB
+      // TODO: Make an ajax call to get the json
+      $.getJSON("data/hackerIpsum.json")
+    .then(result.forEach(function(e){
+      this[e] = results[e]}, this))
+      .Article.prototype.insertRecord(result)
+      .then(Article.fetchAll(result))
+      .catch(function(err){
+        console.error(err);
+      })
+    }
+  })
+};
         // THEN() iterate over the results, and create a new Article object for each.
-          // When that's complete call the insertRecord method for each article you've created.
+        // When that's complete call the insertRecord method for each article you've created.
         // THEN() invoke fetchAll and pass your callback as an argument
         // Don't forget to CATCH() any errors
-      }
-    }
-  )
-};
+        //.catch(function(err){
+        //console.error(err);
+      //})
+
 
 
 // REVIEW: Lets take a few minutes and review what each of these new methods do in relation to our server and DB
@@ -61,7 +73,7 @@ Article.truncateTable = function(callback) {
   })
   .then(function(data) {
     console.log(data);
-    if (callback) callback();
+    if(callback) callback();
   });
 };
 
